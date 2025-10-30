@@ -14,7 +14,7 @@ def load_and_train_model():
     csv_file_path = "realistic_kraljic_dataset.csv" 
     try:
         # Load the actual CSV file provided by the user
-        df = pd.read_csv(csv_file_path)
+        df = pd.read_csv('realistic_kraljic_dataset.csv')
     except FileNotFoundError:
         st.error(f"Error: The file '{csv_file_path}' was not found. Please ensure it is accessible in the environment.")
         # Return dummy values if the file is not found to prevent the app from crashing
