@@ -5,39 +5,41 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-# --- 1. Data Simulation (To make the app runnable without the original CSV) ---
-# NOTE: In a real-world scenario, you would upload the preprocessed data or the model object.
-# This synthetic data mimics the structure and scales seen in the notebook output.
+# --- 1. Data Loading and Model Training (Using the actual uploaded CSV) ---
 
 @st.cache_resource
 def load_and_train_model():
-    """Loads a synthetic dataset, preprocesses it, and trains the GaussianNB model."""
-    # Data is simulated based on the columns used for training in the notebook
-    # Features: Lead_Time_Days, Order_Volume_Units, Cost_per_Unit, Supply_Risk_Score, 
-    #           Profit_Impact_Score, Environmental_Impact, Single_Source_Risk
-    # Target: Kraljic_Category (Strategic, Leverage, Bottleneck, Non-Critical)
+    """Loads the user's dataset, preprocesses it as per the Jupyter notebook, and trains the GaussianNB model."""
+    # The file name provided by the user is used here.
+    csv_file_path = "realistic_kraljic_dataset.csv" 
+    try:
+        # Load the actual CSV file provided by the user
+        df = pd.read_csv(csv_file_path)
+    except FileNotFoundError:
+        st.error(f"Error: The file '{csv_file_path}' was not found. Please ensure it is accessible in the environment.")
+        # Return dummy values if the file is not found to prevent the app from crashing
+        return GaussianNB(), 0.0
 
-    data = {
-        'Lead_Time_Days': np.random.randint(7, 90, 1000),
-        'Order_Volume_Units': np.random.randint(50, 20000, 1000),
-        'Cost_per_Unit': np.random.uniform(10.0, 500.0, 1000),
-        'Supply_Risk_Score': np.random.randint(1, 6, 1000),
-        'Profit_Impact_Score': np.random.randint(1, 6, 1000),
-        'Environmental_Impact': np.random.randint(1, 6, 1000),
-        'Single_Source_Risk': np.random.choice([0, 1], 1000),
-        'Kraljic_Category': np.random.choice(['Strategic', 'Leverage', 'Bottleneck', 'Non-Critical'], 1000)
-    }
-    df = pd.DataFrame(data)
+    # --- Preprocessing steps mirroring the uploaded Jupyter notebook ---
     
-    # Simulate the critical feature engineering logic from your notebook:
-    # 1. Map 'Single_Source_Risk' (already done in simulation, but useful for reference)
-    # 2. Define features (X) and target (y)
-    X = df[['Lead_Time_Days', 'Order_Volume_Units', 'Cost_per_Unit',
+    # 1. Drop identifier and categorical columns that were removed in the notebook
+    # ['Product_Name', 'Supplier_Region', 'Product_ID']
+    df.drop(['Product_Name', 'Supplier_Region', 'Product_ID'], axis=1, inplace=True, errors='ignore')
+    
+    # 2. Encode 'Single_Source_Risk' from 'Yes'/'No' to 1/0
+    # Ensure this column exists before mapping
+    if 'Single_Source_Risk' in df.columns:
+        df['Single_Source_Risk'] = df['Single_Source_Risk'].map({'Yes': 1, 'No': 0})
+    
+    # 3. Define features (X) and target (y) based on the final columns from the notebook
+    feature_cols = ['Lead_Time_Days', 'Order_Volume_Units', 'Cost_per_Unit',
            'Supply_Risk_Score', 'Profit_Impact_Score', 'Environmental_Impact',
-           'Single_Source_Risk']]
+           'Single_Source_Risk']
+    
+    X = df[feature_cols]
     y = df['Kraljic_Category']
     
-    # Train the GaussianNB model (which had the best performance in your notebook)
+    # Train the GaussianNB model (which had the best performance in the notebook)
     model = GaussianNB()
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=12)
     model.fit(X_train, y_train)
@@ -170,7 +172,7 @@ col1.metric(
 )
 
 col2.metric(
-    label="Trained Model Accuracy (Synthetic Data)", 
+    label="Trained Model Accuracy (User Data)", 
     value=f"{accuracy:.2f}"
 )
 
@@ -187,4 +189,4 @@ The Kraljic Matrix is a portfolio analysis tool used to segment purchases based 
 """)
 
 st.markdown("---")
-st.caption("Note: This application uses a synthetic dataset for demonstration purposes. To use your original data, replace the `load_and_train_model` function with your actual data loading and preprocessing steps, or load your saved model object.")
+st.caption("Note: This application has been updated to use your uploaded dataset (`realistic_kraljic_dataset.csv`) for training the model.")
